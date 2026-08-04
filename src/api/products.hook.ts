@@ -1,9 +1,10 @@
-// useQuery sirve para el GET lo que vamos a usar en /api/product
-// useMutation sirve para el POST lo que vamos a usar en /api/product
+// useQuery sirve para hacer peticiones GET al backend y guardar la respuesta en cache
+// useMutation sirve para hacer peticiones POST, PUT, DELETE al backend y guardar la respuesta en cache
 // useQueryClient esto es para hablar con la cache (memoria)
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listProducts, type Product, createProducts, type ProductInput } from "./products";
+import { useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import { listProducts, createProducts,  patchProduct } from "./products";
+import type { FormValues, Product } from "../types";
 
 // cuando un usuario entra por primera vez a la lista de producto. nuestra aplicacion busca el backend la lista de producto y aparece la lista, y cuando entra varias veces directamente pasa por cache
 // pasa primero por cache si no hay nada pasa directamente a lista de producto 
@@ -27,10 +28,10 @@ export function useCreateProduct() {
     return useMutation<
         Product,             //lo que devuelve el backend (el producto creado)
         Error,              //El tipo de error ( usamos Error para mostrar .message)
-        ProductInput       //Lo que pasamos a mutate ({name, price})
+        FormValues       //Lo que pasamos a mutate ({name, price})
     >({
         //se ejecuta cuando llamo: mutate({name, price})
-        mutationFn: (input: ProductInput) => createProducts(input),
+        mutationFn: (input: FormValues) => createProducts(input),
 
         // si el POST fue exitoso
 
@@ -42,4 +43,22 @@ export function useCreateProduct() {
             queryClient.invalidateQueries({ queryKey: ['products']})
         }
     })
+}
+
+//hook para editar los productos
+
+export function usePatchProduct() {
+
+    const queryClient = useQueryClient()
+
+    return useMutation({
+    mutationFn: ({id, data} : {id: number, data: Partial<FormValues>}) =>
+        patchProduct(id, data),
+
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['products']})
+    }
+})
+
+    
 }

@@ -1,91 +1,81 @@
-import { useState, type FormEvent } from "react"
+import { useForm } from "react-hook-form"
 import { useCreateProduct } from "../api/products.hook"
-import { useNavigate } from "react-router-dom"
-
+import type { FormValues } from "../types"
 
 export default function ProductNew() {
 
-  const [name, setName] = useState<string>("")
-  const [price, setPrice] = useState<string>("")
-
-  //- HOOK para el post
+  //1- HOOK para el post
   const create = useCreateProduct()
 
-  //- si el producto se crea correctamente volvemos al listado
-  const navigate = useNavigate()
+  //2- Creamos el formulario con react-hook-form y extraemos sus herramientas mediante destructuring
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting, isValid } } = useForm<FormValues>({
+    mode: "onTouched", // valida cuando el usuario salio del input
+    defaultValues: { name: "", price: undefined as unknown as number } // valores iniciales
+  })
 
-  // creamos una funcion para manejar el submit
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-
-    // validacion minima del front
-    const nombre = name.trim()
-    const precio = Number(price.replace(",", ".")) // soporta "10,5" cambiando la como por un punto
-
-    if (!nombre) {
-      alert("El nombre es requerido")
-      return
-
-    }
-    if (!Number.isFinite(precio) || precio < 0) {
-      alert("El precio deber ser un numero > 0")
-      return
-
-    }
-
-    //ejecutamos el POST 
-    try {
-      await create.mutateAsync({ name: nombre, price: precio}) 
-      navigate("/") 
-    } catch (error) {
-      console.log(error)
-
-    }
-  }
-
+  // 3 - Que es lo que sucede al enviar el formulario
+  const onSubmit = (valor: FormValues) =>
+    new Promise<void>((resolver) => {
+      create.mutate(
+        { name: valor.name.trim(), price: valor.price },
+        {
+          onSuccess: () => { reset(); resolver() },
+          onError: () => { resolver() }
+        })
+    })
 
   return (
     <section className="bg-white border border-b-slate-200 rounded-2xl p-4 max-w-lg " >
       <h2 className="text-xl font-semibold text-slate-900 mb-3 text-center " >Nuevo producto</h2>
 
       <form
-        onSubmit={onSubmit}
-        className="grid gap-3 ">
-        <label className="grid gap-1" >
-          <span className="text-sm text-slate-700" >Nombre</span>
-          <input
-            name="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className=" px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-300  "
-            placeholder="Lapicera"
-          />
-        </label>
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid gap-3 "
+      >
+        <div>
+          <label className="grid gap-1" >
+            <span className="text-sm text-slate-700" >Nombre</span>
+            <input
+              className=" px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-300  "
+              placeholder="Lapicera"
+              {...register("name", {
+                required: "El nombre es obligatorio",
+                validate: (validamos) => validamos.trim().length > 0 || "El nombre no puede estar vacio"
+              })}
+              disabled={isSubmitting || create.isPending}//  bloqueamos mientras envia
+            />
+            {errors.name && <p className="mt-1 text-sm text-amber-700 " >{errors.name.message} </p>}
+          </label>
+        </div>
 
-        <label className="grid gap-1" >
-          <span className="text-sm text-slate-700">Precio</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            name="price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className=" px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-300  "
-            placeholder="10.50"
-          />
-        </label>
+        <div>
+          <label className="grid gap-1" >
+            <span className="text-sm text-slate-700">Precio</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              className=" px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-300  "
+              placeholder="10.50"
+              {...register("price", {
+                valueAsNumber: true,
+                required: "El precio es obligatorio",
+                validate: (validamos) => Number.isFinite(validamos) && validamos > 0 ? true : "El precio debe ser mayor a 0"
+              })}
+              disabled={isSubmitting || create.isPending}//  bloqueamos mientras envia
+            />
+            {errors.price && <p className="mt-1 text-sm text-amber-700 " >{errors.price.message} </p>}
+          </label>
+        </div>
 
-        <button
-          className="px-4 py-2 rounded-xl font-semibold hover:cursor-pointer  "
-        >
-          {create.isPending ? "Creando..." : "Crear"}
-        </button>
-
-        {create.isError && (
-          <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl whitespace-pre-line text-center" >
-            <p>{(create.error as Error).message} </p>
-          </div>
-        )}
+        <div className="flex justify-end " >
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-xl text-white bg-blue-600 hover:bg-blue-800 disabled:opacity-60 font-semibold hover:cursor-pointer  "
+            disabled={isSubmitting || create.isPending || !isValid}//  Se desactiva si se esta enviando o hay errores
+          >
+            {create.isPending || isSubmitting ? "Creando..." : "crear"}
+          </button>
+        </div>
       </form>
     </section>
   )
