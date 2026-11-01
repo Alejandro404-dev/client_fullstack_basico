@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { FormValues, type Product } from "../types";
+import { type FormValues, type Product } from "../types";
 import { useForm } from "react-hook-form";
 
 type EditProductModalProps = {
@@ -69,7 +69,7 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                             <Dialog.Close asChild>
                                 <button
                                     className="px-4 py-2 rounded-xl bg-slate-300 text-slate-700 hover:bg-slate-400 disabled:opacity-60"
-                                    onClick={() => {reset(); onCancel() } }
+                                    onClick={() => { reset(); onCancel() }}
                                     type="button"
                                 >
                                     Cancelar
