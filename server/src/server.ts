@@ -1,5 +1,6 @@
 //conectarnos a un puerto y darle la conexion
 import app from "./index"
+import 'dotenv/config'
 
 const PORT = process.env.PORT || 3000
 

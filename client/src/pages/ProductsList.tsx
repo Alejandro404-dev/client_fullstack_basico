@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useProducts } from "../api/products.hook";
+import { usePatchProduct, useProducts } from "../api/products.hook";
 import EditProductModal from "../components/EditProductModal";
 import type { Product } from "../types";
 
 export default function ProductsList() {
 
     const { data, isLoading, isError } = useProducts()
+
+    const patch = usePatchProduct()
 
     // Estado de la interface (UI) para el modal de editar producto
     const [editOpen, setEditOpen] = useState(false)
@@ -25,6 +27,22 @@ export default function ProductsList() {
         setEditarProducto(producto)
         setEditOpen(true)
     }
+
+    // Recibimos los datos del modal
+    const submitEdit = (changes: Partial<Pick<Product, "name" | "price">>) => {
+        if (!editarProducto) return
+        patch.mutate(
+            { id: editarProducto.id, data: changes },
+            {
+                onSuccess: () => {
+                    setEditOpen(false)
+                    setEditarProducto(null)
+                }
+            }
+        )
+    }
+    // mientras se hace el pacht, marcamos "ocupado"
+    const busy = patch.isPending
 
     // si hay datos, renderizamos la tabla
     return (
@@ -75,7 +93,9 @@ export default function ProductsList() {
             {editarProducto && (<EditProductModal
                 open={editOpen}
                 product={editarProducto}
-                onCancel={ () => {setEditOpen(false); setEditarProducto(null) } }
+                onCancel={() => { setEditOpen(false); setEditarProducto(null) }}
+                onSubmit={submitEdit}
+                busy={busy}
             />
             )}
         </section>

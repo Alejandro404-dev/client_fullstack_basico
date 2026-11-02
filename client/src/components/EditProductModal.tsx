@@ -6,10 +6,11 @@ type EditProductModalProps = {
     open: boolean         // abrir o cerrar el modal
     product: Product      // Tenemos el componente que se monta solo si hay producto
     busy?: boolean        // Bloquea inputs o botones mientras guardamos cambios
-    onCancel: () => void
+    onCancel: () => void  // Cierra sin guardar
+    onSubmit: (changes: Partial<FormValues>) => void //Devuelve solo lo que cambio
 }
 
-export default function EditProductModal({ open, product, busy = false, onCancel }: EditProductModalProps) {
+export default function EditProductModal({ open, product, busy = false, onCancel, onSubmit }: EditProductModalProps) {
 
     const { register, handleSubmit, formState: { errors, isDirty, dirtyFields }, reset } = useForm<FormValues>({
         mode: "onTouched",
@@ -18,6 +19,31 @@ export default function EditProductModal({ open, product, busy = false, onCancel
             price: product.price as unknown as number,
         }
     })
+
+
+    const submit = (data: FormValues) => {
+        const changes: Partial<FormValues> = {}
+
+        //si toco el nombre - se envia sin espacio a los costados
+        if (dirtyFields.name) {
+            changes.name = data.name.trim()
+
+        }
+
+        //si toco el precio - se envia como numero
+        if (dirtyFields.price) {
+            changes.price = Number(data.price)
+
+        }
+
+        //si no retorna nada - no enviamos nada
+        if (Object.keys(changes).length === 0) return
+
+        // Entregamos los cambios al padre que es el que hace el patch real
+        onSubmit(changes)
+
+
+    }
 
 
     return (
@@ -35,7 +61,7 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                         Modifica uno o ambos campos. Solo se enviara lo que cambies.
                     </Dialog.Description>
 
-                    <form className="mt-4 space-y-4 " >
+                    <form onSubmit={handleSubmit(submit)} className="mt-4 space-y-4 " >
                         <div>
                             <label className="block text-sm mb-1 text-slate-700 " >Nombre</label>
                             <input
@@ -44,10 +70,13 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                                 {...register("name", {
                                     validate: (validar) => {
                                         if (!dirtyFields.name) return true // si no lo toco - retornamos un true (no molesta, dejalo tranquilo)
-                                        return validar.trim().length > 0 || "el nombre no puede quedar vacio" //si si lo toco exigir que no quede vacio
+                                        return validar.trim().length > 0 || "El nombre no puede quedar vacio" //si si lo toco exigir que no quede vacio
                                     }
                                 })}
                             />
+                            {errors.name && (
+                                <p className="mt-1 text-sm text-red-700 " >{(String(errors.name.message))}</p>
+                            )}
                         </div>
 
                         <div>
@@ -63,6 +92,9 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                                     }
                                 })}
                             />
+                            {errors.price && (
+                                <p className="mt-1 text-sm text-red-700 " >{(String(errors.price.message))}</p>
+                            )}
                         </div>
 
                         <div className="flex justify-end gap-2 pt-2 " >
@@ -79,8 +111,9 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                             <button
                                 className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 "
                                 type="submit"
+                                disabled={busy || !isDirty}
                             >
-                                Guardar Cambios
+                                {busy ? "Guardando..." : "Guardar cambios"}
                             </button>
                         </div>
                     </form>

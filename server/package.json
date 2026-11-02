@@ -11,7 +11,9 @@
     "postinstall": "prisma generate",
     "prisma:deploy": "prisma migrate deploy"
   },
-  "engines": {"node": ">=18"},
+  "engines": {
+    "node": ">=18"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,6 +21,7 @@
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
     "express": "^5.2.1",
     "valibot": "^1.2.0"
   },
