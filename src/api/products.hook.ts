@@ -2,8 +2,8 @@
 // useMutation sirve para hacer peticiones POST, PUT, DELETE al backend y guardar la respuesta en cache
 // useQueryClient esto es para hablar con la cache (memoria)
 
-import { useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
-import { listProducts, createProducts,  patchProduct } from "./products";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { listProducts, createProducts, patchProduct, DeleteProduct } from "./products";
 import type { FormValues, Product } from "../types";
 
 // cuando un usuario entra por primera vez a la lista de producto. nuestra aplicacion busca el backend la lista de producto y aparece la lista, y cuando entra varias veces directamente pasa por cache
@@ -40,7 +40,7 @@ export function useCreateProduct() {
             //- invalidate lo que hace es marcar como desactualizado el cache
             //- si productlist ya tiene una lista hecha, entonces hace REFETCH y actualiza la lista
             //- si no hay ninguna lista hecha, entonces hace REFETCH cuando vuelva al listar
-            queryClient.invalidateQueries({ queryKey: ['products']})
+            queryClient.invalidateQueries({ queryKey: ['products'] })
         }
     })
 }
@@ -52,13 +52,29 @@ export function usePatchProduct() {
     const queryClient = useQueryClient()
 
     return useMutation({
-    mutationFn: ({id, data} : {id: number, data: Partial<FormValues>}) =>
-        patchProduct(id, data),
+        mutationFn: ({ id, data }: { id: number, data: Partial<FormValues> }) =>
+            patchProduct(id, data),
 
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['products']})
-    }
-})
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['products'] })
+        }
+    })
 
-    
+
+}
+
+//Hook para eliminar un producto
+
+export function useDeleteProduct() {
+    const queryclient = useQueryClient()
+
+    return useMutation({
+        // Recibe el id del producto y llama a DELETE del backend
+        mutationFn: (id: number) => DeleteProduct(id),
+
+        // si todo sale bien , invalidamos la lista para que se refresque sola
+        onSuccess: () => {
+            queryclient.invalidateQueries({ queryKey: ['products'] })
+        }
+    })
 }

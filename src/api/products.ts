@@ -29,3 +29,8 @@ export async function patchProduct(
     return data
 }
 
+//6 - DELETE => /api/products/${id}/:id Eliminamos un producto por ID
+export async function DeleteProduct(id: number): Promise<void> {
+    await api.delete(`/api/products/${id}`)
+}
+

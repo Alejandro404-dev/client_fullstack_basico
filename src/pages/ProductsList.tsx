@@ -1,18 +1,32 @@
 import { useState } from "react";
-import { usePatchProduct, useProducts } from "../api/products.hook";
+import { useDeleteProduct, usePatchProduct, useProducts } from "../api/products.hook";
 import EditProductModal from "../components/EditProductModal";
 import type { Product } from "../types";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 export default function ProductsList() {
 
     const { data, isLoading, isError } = useProducts()
-
+    //importamos el hook de editar
     const patch = usePatchProduct()
 
-    // Estado de la interface (UI) para el modal de editar producto
+    // Estado de la interface (UI) para el modal de editar producto - Edit
     const [editOpen, setEditOpen] = useState(false)
-
     const [editarProducto, setEditarProducto] = useState<Product | null>(null)
+
+    // Estado de la interface (UI) para el modal de eliminar producto - Delete
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const [eliminarProducto, setEliminarProducto] = useState<Product | null>(null)
+
+    //importamos el hook de eliminar
+    const eliminar = useDeleteProduct()
+
+    //Mientras de hace el delete, marcamos "ocupado" (deshabilitamos la ui del modal)
+
+    const busyDelete = eliminar.isPending
+
+
+    // -------------------------------modal editar
 
     // si esta buscando en la BD - Utilizamos isLoading para mostrar cargando...
     if (isLoading) { return <p className="text-slate-600  " >Cargando...</p> }
@@ -43,6 +57,32 @@ export default function ProductsList() {
     }
     // mientras se hace el pacht, marcamos "ocupado"
     const busy = patch.isPending
+
+
+    // -------------------------------modal Eliminar
+
+    //1 - abrir modal eliminar
+    function abrirModalEliminar(producto: Product) {
+        setEliminarProducto(producto)
+        setDeleteOpen(true)
+    }
+
+    //2 - Cerrar modal sin eliminar
+    function closeDelete() {
+        setDeleteOpen(false)
+        setEliminarProducto(null)
+    }
+
+    //3 - Confirmar eliminacion 
+    function confirmDelete() {
+
+        if (!eliminarProducto) return
+        //onsettled => se ejecuta tanto en exito como en error: siempre cerramos el modal
+        eliminar.mutate(eliminarProducto.id, {
+            onSettled: () => closeDelete()
+        })
+
+    }
 
     // si hay datos, renderizamos la tabla
     return (
@@ -81,6 +121,7 @@ export default function ProductsList() {
                                     </button>
 
                                     <button
+                                        onClick={() => abrirModalEliminar(producto)}
                                         className="px-3 py-1 rounded-lg bg-red-600/90 hover:bg-red-500 text-white disabled:opacity-60 cursor-pointer ">
                                         Eliminar
                                     </button>
@@ -90,14 +131,26 @@ export default function ProductsList() {
                     </tbody>
                 </table>
             </div>
-            {editarProducto && (<EditProductModal
-                open={editOpen}
-                product={editarProducto}
-                onCancel={() => { setEditOpen(false); setEditarProducto(null) }}
-                onSubmit={submitEdit}
-                busy={busy}
-            />
+            {editarProducto && (
+                <EditProductModal
+                    open={editOpen}
+                    product={editarProducto}
+                    onCancel={() => { setEditOpen(false); setEditarProducto(null) }}
+                    onSubmit={submitEdit}
+                    busy={busy}
+                />
+            )}
+
+            {eliminarProducto && (
+                <ConfirmDeleteModal
+                    open={deleteOpen}
+                    onCancel={closeDelete}
+                    onConfirm={confirmDelete}
+                    product={eliminarProducto}
+                    busy={busyDelete}
+                />
             )}
         </section>
     )
+
 }

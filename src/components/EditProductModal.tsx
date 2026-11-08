@@ -65,7 +65,7 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                         <div>
                             <label className="block text-sm mb-1 text-slate-700 " >Nombre</label>
                             <input
-                                className=" w-full rounded-xl border-slate-300 px-3 py-2 focus:outline-none focus:ring-blue-500 "
+                                className=" w-full rounded-xl border-slate-300 px-3 py-2 focus:outline-none focus:ring-blue-500 border"
                                 placeholder="Nombre del producto"
                                 {...register("name", {
                                     validate: (validar) => {
@@ -82,7 +82,7 @@ export default function EditProductModal({ open, product, busy = false, onCancel
                         <div>
                             <label className="block text-sm mb-1 text-slate-700 " >Precio</label>
                             <input
-                                className=" w-full rounded-xl border-slate-300 px-3 py-2 focus:outline-none focus:ring-blue-500 "
+                                className=" w-full rounded-xl border-slate-300 px-3 py-2 focus:outline-none focus:ring-blue-500 border"
                                 placeholder="12.5"
                                 {...register("price", {
                                     valueAsNumber: true,
